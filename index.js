@@ -60,7 +60,7 @@ async function run() {
     // =====================
     // QUERIES ROUTES
     // =====================
-    app.post("/queries", verifyFirebaseToken, async (req, res) => {
+    app.post("/queries", async (req, res) => {
       try {
         const newQuery = req.body;
         newQuery.date = new Date().toISOString();
