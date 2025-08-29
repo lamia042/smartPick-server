@@ -52,7 +52,6 @@ const verifyFirebaseToken = async (req, res, next) => {
 // Main function
 async function run() {
   try {
-    await client.connect();
     const db = client.db("smartPickDB");
     const queriesCollection = db.collection("queries");
     const recommendationsCollection = db.collection("recommendations");
@@ -240,7 +239,6 @@ async function run() {
       }
     });
 
-    await db.command({ ping: 1 });
     console.log("✅ Successfully connected to MongoDB!");
   } finally {
     // Keep the client open
