@@ -214,8 +214,9 @@ async function run() {
           .limit(3)
           .toArray();
         res.send(topQueries);
-      } 
-      
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
     });
 
     await db.command({ ping: 1 });
