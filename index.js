@@ -125,7 +125,38 @@ async function run() {
     // RECOMMENDATIONS ROUTES
     // =====================
 
-    
+        app.post("/recommendations", verifyFirebaseToken, async (req, res) => {
+      try {
+        const rec = req.body;
+        rec.date = new Date().toISOString();
+        rec.userEmail = req.user.email;
+
+        const result = await recommendationsCollection.insertOne(rec);
+
+        await queriesCollection.updateOne(
+          { _id: new ObjectId(rec.queryId) },
+          { $inc: { recommendationCount: 1 } }
+        );
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
+    });
+
+    app.get("/recommendations", async (req, res) => {
+      const { queryId, userEmail } = req.query;
+      const filter = {};
+      if (queryId) filter.queryId = queryId;
+      if (userEmail) filter.userEmail = userEmail;
+
+      try {
+        const recs = await recommendationsCollection.find(filter).toArray();
+        res.send(recs);
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
+    });
 
     // Get recommendations for all queries of a user
     
