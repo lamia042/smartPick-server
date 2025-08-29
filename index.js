@@ -180,6 +180,30 @@ async function run() {
     });
 
     // Get recommendations for all queries of a user
+        app.get("/recommendationsForUser", verifyFirebaseToken, async (req, res) => {
+      try {
+        const userQueries = await queriesCollection
+          .find({ email: req.user.email })
+          .project({ _id: 1, queryTitle: 1 })
+          .toArray();
+
+        const queryIds = userQueries.map((q) => q._id.toString());
+
+        const recommendations = await recommendationsCollection
+          .find({ queryId: { $in: queryIds } })
+          .toArray();
+
+        const result = recommendations.map((rec) => {
+          const query = userQueries.find(q => q._id.toString() === rec.queryId);
+          return { ...rec, queryTitle: query?.queryTitle };
+        });
+
+        res.send(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+      }
+    });
     
     // TOP RECOMMENDED QUERIES
     
