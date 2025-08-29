@@ -57,7 +57,7 @@ async function run() {
     // =====================
     // QUERIES ROUTES
     // =====================
-app.post("/queries", verifyFirebaseToken, async (req, res) => {
+   app.post("/queries", verifyFirebaseToken, async (req, res) => {
       try {
         const newQuery = req.body;
         newQuery.date = new Date().toISOString();
@@ -79,7 +79,46 @@ app.post("/queries", verifyFirebaseToken, async (req, res) => {
         res.status(500).send({ message: error.message });
       }
     });
-    
+
+    app.get("/queries/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const query = await queriesCollection.findOne({ _id: new ObjectId(id) });
+        if (!query) return res.status(404).send({ message: "Query not found" });
+        res.send(query);
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
+    });
+
+    app.patch("/queries/:id/recommend", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const result = await queriesCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $inc: { recommendationCount: 1 } }
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
+    });
+
+    app.delete("/queries/:id", verifyFirebaseToken, async (req, res) => {
+      const { id } = req.params;
+      try {
+        const query = await queriesCollection.findOne({ _id: new ObjectId(id) });
+        if (!query) return res.status(404).send({ message: "Query not found" });
+        if (query.email !== req.user.email)
+          return res.status(403).send({ message: "Forbidden: Not your query" });
+
+        await queriesCollection.deleteOne({ _id: new ObjectId(id) });
+        res.send({ message: "Query deleted successfully" });
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
+    });
+
 
     
     // =====================
