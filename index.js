@@ -158,6 +158,27 @@ async function run() {
       }
     });
 
+        app.delete("/recommendations/:id", verifyFirebaseToken, async (req, res) => {
+      const { id } = req.params;
+      try {
+        const recommendation = await recommendationsCollection.findOne({ _id: new ObjectId(id) });
+        if (!recommendation)
+          return res.status(404).send({ message: "Recommendation not found" });
+        if (recommendation.userEmail !== req.user.email)
+          return res.status(403).send({ message: "Forbidden: Not your recommendation" });
+
+        await recommendationsCollection.deleteOne({ _id: new ObjectId(id) });
+        await queriesCollection.updateOne(
+          { _id: new ObjectId(recommendation.queryId) },
+          { $inc: { recommendationCount: -1 } }
+        );
+
+        res.send({ message: "Recommendation deleted successfully" });
+      } catch (error) {
+        res.status(500).send({ message: error.message });
+      }
+    });
+
     // Get recommendations for all queries of a user
     
     // TOP RECOMMENDED QUERIES
