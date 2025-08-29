@@ -13,7 +13,10 @@ const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173",
+        "https://smartpick-frontend.surge.sh"
+    ],
+    
     credentials: true,
   })
 );
