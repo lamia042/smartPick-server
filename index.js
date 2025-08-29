@@ -204,9 +204,19 @@ async function run() {
         res.status(500).send({ message: err.message });
       }
     });
-    
+
     // TOP RECOMMENDED QUERIES
-    
+    app.get("/top-queries", async (req, res) => {
+      try {
+        const topQueries = await queriesCollection
+          .find()
+          .sort({ recommendationCount: -1 })
+          .limit(3)
+          .toArray();
+        res.send(topQueries);
+      } 
+      
+    });
 
     await db.command({ ping: 1 });
     console.log("✅ Successfully connected to MongoDB!");
