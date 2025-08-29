@@ -13,7 +13,7 @@ const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"], 
+    origin: ["http://localhost:5173"],
     credentials: true,
   })
 );
@@ -57,7 +57,7 @@ async function run() {
     // =====================
     // QUERIES ROUTES
     // =====================
-   app.post("/queries", verifyFirebaseToken, async (req, res) => {
+    app.post("/queries", verifyFirebaseToken, async (req, res) => {
       try {
         const newQuery = req.body;
         newQuery.date = new Date().toISOString();
@@ -83,7 +83,9 @@ async function run() {
     app.get("/queries/:id", async (req, res) => {
       const { id } = req.params;
       try {
-        const query = await queriesCollection.findOne({ _id: new ObjectId(id) });
+        const query = await queriesCollection.findOne({
+          _id: new ObjectId(id),
+        });
         if (!query) return res.status(404).send({ message: "Query not found" });
         res.send(query);
       } catch (error) {
@@ -107,7 +109,9 @@ async function run() {
     app.delete("/queries/:id", verifyFirebaseToken, async (req, res) => {
       const { id } = req.params;
       try {
-        const query = await queriesCollection.findOne({ _id: new ObjectId(id) });
+        const query = await queriesCollection.findOne({
+          _id: new ObjectId(id),
+        });
         if (!query) return res.status(404).send({ message: "Query not found" });
         if (query.email !== req.user.email)
           return res.status(403).send({ message: "Forbidden: Not your query" });
@@ -119,13 +123,11 @@ async function run() {
       }
     });
 
-
-    
     // =====================
     // RECOMMENDATIONS ROUTES
     // =====================
 
-        app.post("/recommendations", verifyFirebaseToken, async (req, res) => {
+    app.post("/recommendations", verifyFirebaseToken, async (req, res) => {
       try {
         const rec = req.body;
         rec.date = new Date().toISOString();
@@ -158,29 +160,68 @@ async function run() {
       }
     });
 
-        app.delete("/recommendations/:id", verifyFirebaseToken, async (req, res) => {
-      const { id } = req.params;
-      try {
-        const recommendation = await recommendationsCollection.findOne({ _id: new ObjectId(id) });
-        if (!recommendation)
-          return res.status(404).send({ message: "Recommendation not found" });
-        if (recommendation.userEmail !== req.user.email)
-          return res.status(403).send({ message: "Forbidden: Not your recommendation" });
+    app.delete(
+      "/recommendations/:id",
+      verifyFirebaseToken,
+      async (req, res) => {
+        const { id } = req.params;
+        try {
+          const recommendation = await recommendationsCollection.findOne({
+            _id: new ObjectId(id),
+          });
+          if (!recommendation)
+            return res
+              .status(404)
+              .send({ message: "Recommendation not found" });
+          if (recommendation.userEmail !== req.user.email)
+            return res
+              .status(403)
+              .send({ message: "Forbidden: Not your recommendation" });
 
-        await recommendationsCollection.deleteOne({ _id: new ObjectId(id) });
-        await queriesCollection.updateOne(
-          { _id: new ObjectId(recommendation.queryId) },
-          { $inc: { recommendationCount: -1 } }
-        );
+          await recommendationsCollection.deleteOne({ _id: new ObjectId(id) });
+          await queriesCollection.updateOne(
+            { _id: new ObjectId(recommendation.queryId) },
+            { $inc: { recommendationCount: -1 } }
+          );
 
-        res.send({ message: "Recommendation deleted successfully" });
-      } catch (error) {
-        res.status(500).send({ message: error.message });
+          res.send({ message: "Recommendation deleted successfully" });
+        } catch (error) {
+          res.status(500).send({ message: error.message });
+        }
       }
-    });
+    );
 
     // Get recommendations for all queries of a user
+    app.get(
+      "/recommendationsForUser",
+      verifyFirebaseToken,
+      async (req, res) => {
+        try {
+          const userQueries = await queriesCollection
+            .find({ email: req.user.email })
+            .project({ _id: 1, queryTitle: 1 })
+            .toArray();
 
+          const queryIds = userQueries.map((q) => q._id.toString());
+
+          const recommendations = await recommendationsCollection
+            .find({ queryId: { $in: queryIds } })
+            .toArray();
+
+          const result = recommendations.map((rec) => {
+            const query = userQueries.find(
+              (q) => q._id.toString() === rec.queryId
+            );
+            return { ...rec, queryTitle: query?.queryTitle };
+          });
+
+          res.send(result);
+        } catch (err) {
+          console.error(err);
+          res.status(500).send({ message: err.message });
+        }
+      }
+    );
 
     // TOP RECOMMENDED QUERIES
     app.get("/top-queries", async (req, res) => {
