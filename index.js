@@ -10,16 +10,17 @@ const port = process.env.PORT || 3000;
 
 // Initialize Firebase Admin
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+admin.initializeApp({
+	credential: admin.credential.cert(serviceAccount),
+})
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173",
-      "https://smartpick-client.surge.sh"
-    ],
-    
+    origin: ['http://localhost:5173', 'https://smartpick-client.surge.sh'],
     credentials: true,
+    
   })
-);
+)
 
 app.use(express.json());
 
