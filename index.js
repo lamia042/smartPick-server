@@ -12,13 +12,7 @@ const port = process.env.PORT || 3000;
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 // Middleware
 app.use(
-  cors({
-    origin: ["http://localhost:5173",
-      "https://smartpick-client.surge.sh"
-    ],
-    
-    credentials: true,
-  })
+  cors()
 );
 app.use(express.json());
 
