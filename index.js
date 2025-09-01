@@ -11,11 +11,16 @@ const port = process.env.PORT || 3000;
 // Initialize Firebase Admin
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 // Middleware
-app.use(cors({
-  origin: '*', // Use only for dev/testing
-  credentials: true
-}));
-app.options("*", cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173",
+      "https://smartpick-client.surge.sh"
+    ],
+    
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // MongoDB URI
